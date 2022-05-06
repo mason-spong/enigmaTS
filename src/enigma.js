@@ -1,10 +1,4 @@
 "use strict";
-var ReflectorTypes;
-(function (ReflectorTypes) {
-    ReflectorTypes[ReflectorTypes["A"] = 0] = "A";
-    ReflectorTypes[ReflectorTypes["B"] = 1] = "B";
-    ReflectorTypes[ReflectorTypes["C"] = 2] = "C";
-})(ReflectorTypes || (ReflectorTypes = {}));
 const numEncipherableChars = 26;
 var Letters;
 (function (Letters) {
@@ -35,7 +29,7 @@ var Letters;
     Letters[Letters["Y"] = 24] = "Y";
     Letters[Letters["Z"] = 25] = "Z";
 })(Letters || (Letters = {}));
-// Helper function to ensure % behavior of negative numbers
+// Helper function to ensure % does not produce negative numbers
 function mod(n, m) {
     return ((n % m) + m) % m;
 }
@@ -84,11 +78,24 @@ class ReflectorConfig {
 }
 class Reflector {
     constructor(reflectorConfig) {
-        // TODO validate this stringSeed
-        this.wireMap = new WireMap(reflectorConfig.wireMapSeed);
+        let map = new WireMap(reflectorConfig.wireMapSeed);
+        if (!this.isValidReflectorWireMap(map)) {
+            throw new Error("Invalid wireMapSeed given to reflector!");
+        }
+        this.wireMap = map;
     }
     reflectorPass(absolutePosition) {
         return this.wireMap.getAtIdx(absolutePosition);
+    }
+    isValidReflectorWireMap(wireMap) {
+        for (let i = 0; i < wireMap.length; i++) {
+            let letterAtIdx = wireMap.getAtIdx(i);
+            if (i === letterAtIdx ||
+                i !== wireMap.getAtIdx(letterAtIdx)) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 class RotorConfig {
@@ -117,6 +124,7 @@ class Rotor {
         return absoluteOutput;
     }
 }
+// TODO refactor to use config instead of wireMap directly
 class Plugboard {
     constructor(wireMap) {
         if (!this.isValidPlugboardWireMap(wireMap)) {

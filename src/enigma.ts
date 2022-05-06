@@ -1,9 +1,3 @@
-enum ReflectorTypes {
-  A,
-  B,
-  C,
-}
-
 const numEncipherableChars = 26;
 enum Letters {
   A,
@@ -34,7 +28,7 @@ enum Letters {
   Z,
 }
 
-// Helper function to ensure % behavior of negative numbers
+// Helper function to ensure % does not produce negative numbers
 function mod(n: number, m: number) {
   return ((n % m) + m) % m;
 }
@@ -96,12 +90,28 @@ class Reflector {
   wireMap: WireMap;
 
   constructor(reflectorConfig: ReflectorConfig) {
-    // TODO validate this stringSeed
-    this.wireMap = new WireMap(reflectorConfig.wireMapSeed);
+    let map = new WireMap(reflectorConfig.wireMapSeed);
+    if (!this.isValidReflectorWireMap(map)) {
+      throw new Error("Invalid wireMapSeed given to reflector!");
+    }
+    this.wireMap = map;
   }
 
   reflectorPass(absolutePosition: Letters): Letters {
     return this.wireMap.getAtIdx(absolutePosition);
+  }
+
+  private isValidReflectorWireMap(wireMap: WireMap): boolean {
+    for (let i = 0; i < wireMap.length; i++) {
+      let letterAtIdx = wireMap.getAtIdx(i) as number;
+      if (
+        i === letterAtIdx ||
+        i !== (wireMap.getAtIdx(letterAtIdx) as number)
+      ) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 
@@ -155,6 +165,7 @@ class Rotor {
   }
 }
 
+// TODO refactor to use config instead of wireMap directly
 class Plugboard {
   wireMap: WireMap;
 
