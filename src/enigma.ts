@@ -4,14 +4,6 @@ enum ReflectorTypes {
   C,
 }
 
-enum RotorTypes {
-  I,
-  II,
-  III,
-  IV,
-  V,
-}
-
 const numEncipherableChars = 26;
 enum Letters {
   A,
@@ -92,29 +84,20 @@ class WireMap {
   }
 }
 
+class ReflectorConfig {
+  wireMapSeed: string;
+
+  constructor(wireMapSeed: string) {
+    this.wireMapSeed = wireMapSeed;
+  }
+}
+
 class Reflector {
-  type: ReflectorTypes;
   wireMap: WireMap;
 
-  constructor(type: ReflectorTypes) {
-    this.type = type;
-    switch (this.type) {
-      case ReflectorTypes.A: {
-        this.wireMap = new WireMap("EJMZALYXVBWFCRQUONTSPIKHGD");
-        break;
-      }
-      case ReflectorTypes.B: {
-        this.wireMap = new WireMap("YRUHQSLDPXNGOKMIEBFZCWVJAT");
-        break;
-      }
-      case ReflectorTypes.C: {
-        this.wireMap = new WireMap("FVPJIAOYEDRZXWGCTKUQSBNMHL");
-        break;
-      }
-      default: {
-        throw new Error("Invalid ReflectorType given");
-      }
-    }
+  constructor(reflectorConfig: ReflectorConfig) {
+    // TODO validate this stringSeed
+    this.wireMap = new WireMap(reflectorConfig.wireMapSeed);
   }
 
   reflectorPass(absolutePosition: Letters): Letters {
@@ -122,47 +105,27 @@ class Reflector {
   }
 }
 
+class RotorConfig {
+  wireMapSeed: string;
+  turnoverIdx: number;
+
+  constructor(wireMapSeed: string, turnoverIdx: number) {
+    this.wireMapSeed = wireMapSeed;
+    this.turnoverIdx = turnoverIdx;
+  }
+}
+
 class Rotor {
-  type: RotorTypes;
   wireMap: WireMap;
   turnoverIdx: number;
   ringSetting: number;
   rotorSetting: number;
 
-  constructor(type: RotorTypes) {
-    this.type = type;
+  constructor(rotorConfig: RotorConfig) {
+    this.wireMap = new WireMap(rotorConfig.wireMapSeed);
+    this.turnoverIdx = rotorConfig.turnoverIdx;
     this.ringSetting = 0;
     this.rotorSetting = 0;
-    switch (this.type) {
-      case RotorTypes.I: {
-        this.wireMap = new WireMap("EKMFLGDQVZNTOWYHXUSPAIBRCJ");
-        this.turnoverIdx = 16;
-        break;
-      }
-      case RotorTypes.II: {
-        this.wireMap = new WireMap("AJDKSIRUXBLHWTMCQGZNPYFVOE");
-        this.turnoverIdx = 4;
-        break;
-      }
-      case RotorTypes.III: {
-        this.wireMap = new WireMap("BDFHJLCPRTXVZNYEIWGAKMUSQO");
-        this.turnoverIdx = 21;
-        break;
-      }
-      case RotorTypes.IV: {
-        this.wireMap = new WireMap("ESOVPZJAYQUIRHXLNFTGKDCMWB");
-        this.turnoverIdx = 9;
-        break;
-      }
-      case RotorTypes.V: {
-        this.wireMap = new WireMap("VZBRGITYUPSDNHLXAWMJQOFECK");
-        this.turnoverIdx = 25;
-        break;
-      }
-      default: {
-        throw new Error("Invalid RotorType given");
-      }
-    }
   }
 
   rotorForwardPass(absolutePosition: Letters): Letters {
@@ -299,11 +262,17 @@ class EnigmaModel {
   }
 }
 
-let reflector = new Reflector(ReflectorTypes.A);
-let rotors = [
-  new Rotor(RotorTypes.I),
-  new Rotor(RotorTypes.II),
-  new Rotor(RotorTypes.III),
-];
+const reflectorA = new ReflectorConfig("EJMZALYXVBWFCRQUONTSPIKHGD");
+const reflectorB = new ReflectorConfig("YRUHQSLDPXNGOKMIEBFZCWVJAT");
+const reflectorC = new ReflectorConfig("FVPJIAOYEDRZXWGCTKUQSBNMHL");
+
+const rotorI = new RotorConfig("EKMFLGDQVZNTOWYHXUSPAIBRCJ", 16);
+const rotorII = new RotorConfig("AJDKSIRUXBLHWTMCQGZNPYFVOE", 4);
+const rotorIII = new RotorConfig("BDFHJLCPRTXVZNYEIWGAKMUSQO", 21);
+const rotorIV = new RotorConfig("ESOVPZJAYQUIRHXLNFTGKDCMWB", 9);
+const rotorV = new RotorConfig("VZBRGITYUPSDNHLXAWMJQOFECK", 25);
+
+let reflector = new Reflector(reflectorA);
+let rotors = [new Rotor(rotorI), new Rotor(rotorII), new Rotor(rotorIII)];
 let plugboard = new Plugboard(new WireMap("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
 let enigmaModel = new EnigmaModel(reflector, rotors, plugboard);

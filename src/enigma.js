@@ -5,14 +5,6 @@ var ReflectorTypes;
     ReflectorTypes[ReflectorTypes["B"] = 1] = "B";
     ReflectorTypes[ReflectorTypes["C"] = 2] = "C";
 })(ReflectorTypes || (ReflectorTypes = {}));
-var RotorTypes;
-(function (RotorTypes) {
-    RotorTypes[RotorTypes["I"] = 0] = "I";
-    RotorTypes[RotorTypes["II"] = 1] = "II";
-    RotorTypes[RotorTypes["III"] = 2] = "III";
-    RotorTypes[RotorTypes["IV"] = 3] = "IV";
-    RotorTypes[RotorTypes["V"] = 4] = "V";
-})(RotorTypes || (RotorTypes = {}));
 const numEncipherableChars = 26;
 var Letters;
 (function (Letters) {
@@ -85,66 +77,32 @@ class WireMap {
         return true;
     }
 }
+class ReflectorConfig {
+    constructor(wireMapSeed) {
+        this.wireMapSeed = wireMapSeed;
+    }
+}
 class Reflector {
-    constructor(type) {
-        this.type = type;
-        switch (this.type) {
-            case ReflectorTypes.A: {
-                this.wireMap = new WireMap("EJMZALYXVBWFCRQUONTSPIKHGD");
-                break;
-            }
-            case ReflectorTypes.B: {
-                this.wireMap = new WireMap("YRUHQSLDPXNGOKMIEBFZCWVJAT");
-                break;
-            }
-            case ReflectorTypes.C: {
-                this.wireMap = new WireMap("FVPJIAOYEDRZXWGCTKUQSBNMHL");
-                break;
-            }
-            default: {
-                throw new Error("Invalid ReflectorType given");
-            }
-        }
+    constructor(reflectorConfig) {
+        // TODO validate this stringSeed
+        this.wireMap = new WireMap(reflectorConfig.wireMapSeed);
     }
     reflectorPass(absolutePosition) {
         return this.wireMap.getAtIdx(absolutePosition);
     }
 }
+class RotorConfig {
+    constructor(wireMapSeed, turnoverIdx) {
+        this.wireMapSeed = wireMapSeed;
+        this.turnoverIdx = turnoverIdx;
+    }
+}
 class Rotor {
-    constructor(type) {
-        this.type = type;
+    constructor(rotorConfig) {
+        this.wireMap = new WireMap(rotorConfig.wireMapSeed);
+        this.turnoverIdx = rotorConfig.turnoverIdx;
         this.ringSetting = 0;
         this.rotorSetting = 0;
-        switch (this.type) {
-            case RotorTypes.I: {
-                this.wireMap = new WireMap("EKMFLGDQVZNTOWYHXUSPAIBRCJ");
-                this.turnoverIdx = 16;
-                break;
-            }
-            case RotorTypes.II: {
-                this.wireMap = new WireMap("AJDKSIRUXBLHWTMCQGZNPYFVOE");
-                this.turnoverIdx = 4;
-                break;
-            }
-            case RotorTypes.III: {
-                this.wireMap = new WireMap("BDFHJLCPRTXVZNYEIWGAKMUSQO");
-                this.turnoverIdx = 21;
-                break;
-            }
-            case RotorTypes.IV: {
-                this.wireMap = new WireMap("ESOVPZJAYQUIRHXLNFTGKDCMWB");
-                this.turnoverIdx = 9;
-                break;
-            }
-            case RotorTypes.V: {
-                this.wireMap = new WireMap("VZBRGITYUPSDNHLXAWMJQOFECK");
-                this.turnoverIdx = 25;
-                break;
-            }
-            default: {
-                throw new Error("Invalid RotorType given");
-            }
-        }
     }
     rotorForwardPass(absolutePosition) {
         let relativePosition = mod(absolutePosition + this.rotorSetting - this.ringSetting, numEncipherableChars);
@@ -190,7 +148,7 @@ class EnigmaModel {
         this.plugboard = plugboard;
     }
     pressKey(key) {
-        // Rotate rotors 
+        // Rotate rotors
         this.updateRotors();
         // Pass signal through plugboard
         key = this.plugboard.plugboardPass(key);
@@ -238,11 +196,15 @@ class EnigmaModel {
         }
     }
 }
-let reflector = new Reflector(ReflectorTypes.A);
-let rotors = [
-    new Rotor(RotorTypes.I),
-    new Rotor(RotorTypes.II),
-    new Rotor(RotorTypes.III),
-];
+const reflectorA = new ReflectorConfig("EJMZALYXVBWFCRQUONTSPIKHGD");
+const reflectorB = new ReflectorConfig("YRUHQSLDPXNGOKMIEBFZCWVJAT");
+const reflectorC = new ReflectorConfig("FVPJIAOYEDRZXWGCTKUQSBNMHL");
+const rotorI = new RotorConfig("EKMFLGDQVZNTOWYHXUSPAIBRCJ", 16);
+const rotorII = new RotorConfig("AJDKSIRUXBLHWTMCQGZNPYFVOE", 4);
+const rotorIII = new RotorConfig("BDFHJLCPRTXVZNYEIWGAKMUSQO", 21);
+const rotorIV = new RotorConfig("ESOVPZJAYQUIRHXLNFTGKDCMWB", 9);
+const rotorV = new RotorConfig("VZBRGITYUPSDNHLXAWMJQOFECK", 25);
+let reflector = new Reflector(reflectorA);
+let rotors = [new Rotor(rotorI), new Rotor(rotorII), new Rotor(rotorIII)];
 let plugboard = new Plugboard(new WireMap("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
 let enigmaModel = new EnigmaModel(reflector, rotors, plugboard);
