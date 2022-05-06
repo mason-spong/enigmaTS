@@ -296,7 +296,10 @@ class ViewHelper {
     return selectElement;
   }
 
-  createSelectRangeOptions(startIdx: number, endIdx: number): HTMLSelectElement {
+  createSelectRangeOptions(
+    startIdx: number,
+    endIdx: number
+  ): HTMLSelectElement {
     let selectElement = this.createElement("select") as HTMLSelectElement;
 
     for (let i = startIdx; i < endIdx; i++) {
@@ -310,7 +313,7 @@ class ViewHelper {
 
   createElement(tag: string, className?: string): HTMLElement {
     const element = document.createElement(tag);
-    if (typeof className !== 'undefined') element.classList.add(className);
+    if (typeof className !== "undefined") element.classList.add(className);
     return element;
   }
 
@@ -318,6 +321,20 @@ class ViewHelper {
     const element = document.querySelector(selector) as HTMLElement;
     if (element) return element;
     throw new Error("Could not find specified element");
+  }
+}
+
+class InputOutputView {
+  view: HTMLElement;
+
+  constructor() {
+    let helper = new ViewHelper();
+    this.view = helper.createElement("div", "input-output-container");
+    let input = helper.createElement("textarea", "io-textarea") as HTMLTextAreaElement;
+    input.placeholder = "Input...";
+    let output = helper.createElement("textarea", "io-textarea") as HTMLTextAreaElement;
+    output.placeholder = "Output...";
+    this.view.append(input, output);
   }
 }
 
@@ -334,7 +351,7 @@ class AlphaOrthoKeyboardView {
       this.view.append(key);
       if (charSet[i] === "L") {
         this.view.append(helper.createElement("div"));
-      } 
+      }
     }
   }
 }
@@ -349,13 +366,23 @@ class RotorOptionsView {
     let helper = new ViewHelper();
     this.container = helper.createElement("div");
     this.container.classList.add("rotor-options-container");
-    this.typeSelect = helper.createSelectStringOptions(["I", "II", "III", "IV", "V"]);
+    this.typeSelect = helper.createSelectStringOptions([
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V",
+    ]);
     this.typeSelect.classList.add("rotor-select");
     this.ringSelect = helper.createSelectRangeOptions(1, 27);
     this.ringSelect.classList.add("rotor-select");
     this.positionSelect = helper.createSelectRangeOptions(1, 27);
     this.positionSelect.classList.add("rotor-select");
-    this.container.append(this.typeSelect, this.ringSelect, this.positionSelect);
+    this.container.append(
+      this.typeSelect,
+      this.ringSelect,
+      this.positionSelect
+    );
   }
 }
 
@@ -365,26 +392,32 @@ class View {
   reflectorSelect: HTMLSelectElement;
   rotorOptionsView: HTMLElement;
   plugboardView: HTMLElement;
-
+  ioView: HTMLElement;
 
   constructor() {
     let helper = new ViewHelper();
     this.app = helper.getElement("#root");
 
-    this.title = helper.createElement('h1');
+    this.title = helper.createElement("h1");
     this.title.textContent = "enigma machine";
 
     this.reflectorSelect = helper.createSelectStringOptions(["A", "B", "C"]);
-    this.rotorOptionsView = helper.createElement("div", "rotor-options-holder")
+    this.rotorOptionsView = helper.createElement("div", "rotor-options-holder");
     this.plugboardView = new AlphaOrthoKeyboardView().view;
+    this.ioView = new InputOutputView().view;
 
     for (let i = 0; i < 3; i++) {
       let view = new RotorOptionsView();
       this.rotorOptionsView.append(view.container);
     }
 
-    this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView, this.plugboardView);
-
+    this.app.append(
+      this.title,
+      this.reflectorSelect,
+      this.rotorOptionsView,
+      this.plugboardView,
+      this.ioView
+    );
   }
 }
 
@@ -397,7 +430,6 @@ class Controller {
     this.view = view;
   }
 }
-
 
 const reflectorA = new ReflectorConfig("EJMZALYXVBWFCRQUONTSPIKHGD");
 const reflectorB = new ReflectorConfig("YRUHQSLDPXNGOKMIEBFZCWVJAT");

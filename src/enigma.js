@@ -234,7 +234,7 @@ class ViewHelper {
     }
     createElement(tag, className) {
         const element = document.createElement(tag);
-        if (typeof className !== 'undefined')
+        if (typeof className !== "undefined")
             element.classList.add(className);
         return element;
     }
@@ -243,6 +243,17 @@ class ViewHelper {
         if (element)
             return element;
         throw new Error("Could not find specified element");
+    }
+}
+class InputOutputView {
+    constructor() {
+        let helper = new ViewHelper();
+        this.view = helper.createElement("div", "input-output-container");
+        let input = helper.createElement("textarea", "io-textarea");
+        input.placeholder = "Input...";
+        let output = helper.createElement("textarea", "io-textarea");
+        output.placeholder = "Output...";
+        this.view.append(input, output);
     }
 }
 class AlphaOrthoKeyboardView {
@@ -265,7 +276,13 @@ class RotorOptionsView {
         let helper = new ViewHelper();
         this.container = helper.createElement("div");
         this.container.classList.add("rotor-options-container");
-        this.typeSelect = helper.createSelectStringOptions(["I", "II", "III", "IV", "V"]);
+        this.typeSelect = helper.createSelectStringOptions([
+            "I",
+            "II",
+            "III",
+            "IV",
+            "V",
+        ]);
         this.typeSelect.classList.add("rotor-select");
         this.ringSelect = helper.createSelectRangeOptions(1, 27);
         this.ringSelect.classList.add("rotor-select");
@@ -278,16 +295,17 @@ class View {
     constructor() {
         let helper = new ViewHelper();
         this.app = helper.getElement("#root");
-        this.title = helper.createElement('h1');
+        this.title = helper.createElement("h1");
         this.title.textContent = "enigma machine";
         this.reflectorSelect = helper.createSelectStringOptions(["A", "B", "C"]);
         this.rotorOptionsView = helper.createElement("div", "rotor-options-holder");
         this.plugboardView = new AlphaOrthoKeyboardView().view;
+        this.ioView = new InputOutputView().view;
         for (let i = 0; i < 3; i++) {
             let view = new RotorOptionsView();
             this.rotorOptionsView.append(view.container);
         }
-        this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView, this.plugboardView);
+        this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView, this.plugboardView, this.ioView);
     }
 }
 class Controller {

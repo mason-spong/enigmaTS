@@ -7,6 +7,7 @@
 :root {
   --main-background-dark: #1e1e1e;
   --main-text-color: #faf9f6d5;
+  --secondary-background-dark: #414040;
   --action-background-color: #b05b00;
 }
 
@@ -42,6 +43,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Helvetica Neue", Arial, sans-serif;
   font-size: 20px;
+  color: var(--main-text-color);
 }
 
 a {
@@ -103,6 +105,27 @@ a {
   justify-content: center; /* align horizontal */
   align-items: center; /* align vertical */
   touch-action: manipulation;
+}
+
+.input-output-container {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+	grid-gap: 5px;
+}
+
+.io-textarea {
+  width:100%;
+  resize: none;
+  padding:15px;
+  border-radius:5px;
+  border: 0;
+  height:150px;
+  background-color: var(--secondary-background-dark);
+  color: var(--main-text-color);
+}
+
+.io-textarea:focus {
+  outline: 1px solid var(--action-background-color);
 }
 
 @media (hover: hover) and (pointer: fine) {
