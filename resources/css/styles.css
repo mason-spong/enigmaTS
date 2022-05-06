@@ -67,6 +67,22 @@ a {
   margin-top: 10px;
 }
 
+.rotor-select {
+  display: block;
+  width: fit-content;
+}
+
+.rotor-options-container {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  width: fit-content;
+}
+
+.rotor-options-holder {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: fit-content;
+}
 .key-container {
   width: max(70%, 350px);
   aspect-ratio: 10/3;

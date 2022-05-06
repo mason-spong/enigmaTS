@@ -281,6 +281,105 @@ class EnigmaModel {
   }
 }
 
+class ViewHelper {
+  createSelectStringOptions(options: string[]): HTMLSelectElement {
+    console.log(options);
+    let selectElement = this.createElement("select") as HTMLSelectElement;
+
+    for (const option of options) {
+      console.log(option);
+      let optionElement = this.createElement("option") as HTMLOptionElement;
+      optionElement.setAttribute("value", option);
+      optionElement.textContent = option;
+      selectElement.appendChild(optionElement);
+    }
+    return selectElement;
+  }
+
+  createSelectRangeOptions(startIdx: number, endIdx: number): HTMLSelectElement {
+    let selectElement = this.createElement("select") as HTMLSelectElement;
+
+    for (let i = startIdx; i < endIdx; i++) {
+      let optionElement = this.createElement("option") as HTMLOptionElement;
+      optionElement.setAttribute("value", i.toString());
+      optionElement.textContent = i.toString();
+      selectElement.appendChild(optionElement);
+    }
+    return selectElement;
+  }
+
+  createElement(tag: string, className?: string): HTMLElement {
+    const element = document.createElement(tag);
+    if (typeof className !== 'undefined') element.classList.add(className);
+    return element;
+  }
+
+  getElement(selector: string): HTMLElement {
+    const element = document.querySelector(selector) as HTMLElement;
+    if (element) return element;
+    throw new Error("Could not find specified element");
+  }
+}
+
+class RotorOptionsView {
+  container: HTMLElement;
+  typeSelect: HTMLSelectElement;
+  ringSelect: HTMLSelectElement;
+  positionSelect: HTMLSelectElement;
+
+  constructor() {
+    let helper = new ViewHelper();
+    this.container = helper.createElement("div");
+    this.container.classList.add("rotor-options-container");
+    this.typeSelect = helper.createSelectStringOptions(["I", "II", "III", "IV", "V"]);
+    this.typeSelect.classList.add("rotor-select");
+    this.ringSelect = helper.createSelectRangeOptions(1, 27);
+    this.ringSelect.classList.add("rotor-select");
+    this.positionSelect = helper.createSelectRangeOptions(1, 27);
+    this.positionSelect.classList.add("rotor-select");
+    this.container.append(this.typeSelect, this.ringSelect, this.positionSelect);
+  }
+}
+
+class View {
+  app: HTMLElement;
+  title: HTMLElement;
+  reflectorSelect: HTMLSelectElement;
+  rotorOptionsView: HTMLElement;
+
+
+  constructor() {
+    let helper = new ViewHelper();
+    this.app = helper.getElement("#root");
+
+    this.title = helper.createElement('h1');
+    this.title.textContent = "enigma machine";
+
+    this.reflectorSelect = helper.createSelectStringOptions(["A", "B", "C"]);
+    this.rotorOptionsView = helper.createElement("div", "rotor-options-holder")
+    
+
+    for (let i = 0; i < 3; i++) {
+      let view = new RotorOptionsView();
+      this.rotorOptionsView.append(view.container);
+    }
+
+    this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView);
+
+  }
+}
+
+class Controller {
+  model: EnigmaModel;
+  view: View;
+
+  constructor(model: EnigmaModel, view: View) {
+    this.model = model;
+    this.view = view;
+  }
+}
+
+
 const reflectorA = new ReflectorConfig("EJMZALYXVBWFCRQUONTSPIKHGD");
 const reflectorB = new ReflectorConfig("YRUHQSLDPXNGOKMIEBFZCWVJAT");
 const reflectorC = new ReflectorConfig("FVPJIAOYEDRZXWGCTKUQSBNMHL");
@@ -297,3 +396,5 @@ let reflector = new Reflector(reflectorA);
 let rotors = [new Rotor(rotorI), new Rotor(rotorII), new Rotor(rotorIII)];
 let plugboard = new Plugboard(emptyPlugboard);
 let enigmaModel = new EnigmaModel(reflector, rotors, plugboard);
+
+let app = new Controller(enigmaModel, new View());
