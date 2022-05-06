@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Enigma</title>
+    <meta
+      name="description"
+      content="JS implementation of the Enigma Machine"
+    />
+
+    <link rel="stylesheet" href="/resources/css/styles.css" />
+    <script type="text/javascript" src="/src/enigma.js"></script>
+  </head>
+
+  <body>
+    <div class="main-column">
+      <h1 class="page-header header-text">Enigma</h1>
+      <p class="body-text">JavaScript implementation of the Enigma machine</p>
+      <input id="seed-input" />
+      <div id="seed-submit-button" class="body-text div-button">Submit</div>
+      <div id="seed-lock-button" class="body-text div-button">Lock</div>
+      <div class="enigma-container">
+        <select
+          name="reflector"
+          id="reflectorSelect"
+          onchange="enigma.setReflector(event.target.value, true)"
+        >
+          <option value="A" selected="selected">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+        </select>
+        <select
+          name="rotor2"
+          id="rotor2Select"
+          onchange="enigma.setRotor(2, event.target.value, true)"
+        >
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3" selected="selected">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <select
+          name="rotor1"
+          id="rotor1Select"
+          onchange="enigma.setRotor(1, event.target.value, true)"
+        >
+          <option value="1">1</option>
+          <option value="2" selected="selected">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <select
+          name="rotor0"
+          id="rotor0Select"
+          onchange="enigma.setRotor(0, event.target.value, true)"
+        >
+          <option value="1" selected="selected">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <select
+          name="rotor2Ring"
+          id="rotor2Ring"
+          onchange="enigma.setRingPosition(2, event.target.value, true)"
+        ></select>
+        <select
+          name="rotor1Ring"
+          id="rotor1Ring"
+          onchange="enigma.setRingPosition(1, event.target.value, true)"
+        ></select>
+        <select
+          name="rotor0Ring"
+          id="rotor0Ring"
+          onchange="enigma.setRingPosition(0, event.target.value, true)"
+        ></select>
+        <select
+          name="rotor2Position"
+          id="rotor2Position"
+          onchange="enigma.setRotorPosition(2, event.target.value, true)"
+        ></select>
+        <select
+          name="rotor1Position"
+          id="rotor1Position"
+          onchange="enigma.setRotorPosition(1, event.target.value, true)"
+        ></select>
+        <select
+          name="rotor0Position"
+          id="rotor0Position"
+          onchange="enigma.setRotorPosition(0, event.target.value, true)"
+        ></select>
+        <div class="key-container body-text">
+          <div class="key">Q</div>
+          <div class="key">W</div>
+          <div class="key">E</div>
+          <div class="key">R</div>
+          <div class="key">T</div>
+          <div class="key">Y</div>
+          <div class="key">U</div>
+          <div class="key">I</div>
+          <div class="key">O</div>
+          <div class="key">P</div>
+          <div class="key">A</div>
+          <div class="key">S</div>
+          <div class="key">D</div>
+          <div class="key">F</div>
+          <div class="key">G</div>
+          <div class="key">H</div>
+          <div class="key">J</div>
+          <div class="key">K</div>
+          <div class="key">L</div>
+          <div></div>
+          <div class="key">Z</div>
+          <div class="key">X</div>
+          <div class="key">C</div>
+          <div class="key">V</div>
+          <div class="key">B</div>
+          <div class="key">N</div>
+          <div class="key">M</div>
+        </div>
+        <h2 class="body-text">Type your message</h2>
+        <input id="enigma-input" />
+        <div id="submit-button" class="body-text div-button">Submit</div>
+        <h2 id="enigma-out" class="body-text"></h2>
+      </div>
+    </div>
+
+    <script>
+      function createRotorPositionSelectOptions() {
+        for (let i = 0; i < 3; i++) {
+          let rotorPositionSelect = document.getElementById("rotor0Position");
+          if (i == 1) {
+            rotorPositionSelect = document.getElementById("rotor1Position");
+          } else if (i == 2) {
+            rotorPositionSelect = document.getElementById("rotor2Position");
+          }
+
+          for (let j = 0; j < 26; j++) {
+            let opt = document.createElement("option");
+            opt.value = j + 1;
+            opt.innerHTML = j + 1;
+            rotorPositionSelect.appendChild(opt);
+          }
+        }
+      }
+      createRotorPositionSelectOptions();
+
+      function createRingPositionSelectOptions() {
+        for (let i = 0; i < 3; i++) {
+          let ringPositionSelect = document.getElementById("rotor0Ring");
+          if (i == 1) {
+            ringPositionSelect = document.getElementById("rotor1Ring");
+          } else if (i == 2) {
+            ringPositionSelect = document.getElementById("rotor2Ring");
+          }
+
+          for (let j = 0; j < 26; j++) {
+            let opt = document.createElement("option");
+            opt.value = j + 1;
+            opt.innerHTML = j + 1;
+            ringPositionSelect.appendChild(opt);
+          }
+        }
+      }
+      createRingPositionSelectOptions();
+
+      rotor1 = {
+        num: 1,
+        map: "ekmflgdqvzntowyhxuspaibrcj",
+        turnoverIdx: 16, // Q
+        ringSetting: 0,
+      };
+      rotor2 = {
+        num: 2,
+        map: "ajdksiruxblhwtmcqgznpyfvoe",
+        turnoverIdx: 4, // E
+        ringSetting: 0,
+      };
+      rotor3 = {
+        num: 3,
+        map: "bdfhjlcprtxvznyeiwgakmusqo",
+        turnoverIdx: 21, // V
+        ringSetting: 0,
+      };
+      rotor4 = {
+        num: 4,
+        map: "esovpzjayquirhxlnftgkdcmwb",
+        turnoverIdx: 9, // J
+        ringSetting: 0,
+      };
+      rotor5 = {
+        num: 5,
+        map: "vzbrgityupsdnhlxawmjqofeck",
+        turnoverIdx: 25, // Z
+        ringSetting: 0,
+      };
+
+      reflectorA = "ejmzalyxvbwfcrquontspikhgd";
+
+      reflectorB = "yruhqsldpxngokmiebfzcwvjat";
+
+      reflectorC = "fvpjiaoyedrzxwgctkuqsbnmhl";
+
+      plugboardColors = [
+        "#332288",
+        "#117733",
+        "#44AA99",
+        "#88CCEE",
+        "#DDCC77",
+        "#CC6677",
+        "#AA4499",
+        "#882255",
+        "#648FFF",
+        "#785EF0",
+        "#DC267F",
+        "#FE6100",
+        "#FFB000",
+      ];
+
+      plugSelect = null;
+      plugColor = 0;
+
+      function calculateSeed() {
+        let reflector = "A";
+        if (enigma.reflector === "yruhqsldpxngokmiebfzcwvjat") {
+          reflector = "B";
+        } else if (enigma.reflector === "fvpjiaoyedrzxwgctkuqsbnmhl") {
+          reflector = "C";
+        }
+        let rotor1 = numberToLetter(enigma.rotors[0].num - 1);
+        let rotor2 = numberToLetter(enigma.rotors[1].num - 1);
+        let rotor3 = numberToLetter(enigma.rotors[2].num - 1);
+        let ring1 = numberToLetter(enigma.rotors[0].ringSetting);
+        let ring2 = numberToLetter(enigma.rotors[1].ringSetting);
+        let ring3 = numberToLetter(enigma.rotors[2].ringSetting);
+        let rotorSet1 = numberToLetter(enigma.rotorPositions[0]);
+        let rotorSet2 = numberToLetter(enigma.rotorPositions[1]);
+        let rotorSet3 = numberToLetter(enigma.rotorPositions[2]);
+        let plugSet = [];
+        let ignoreIdxs = [];
+        for (let i = 0; i < enigma.plugboard.length; i++) {
+          if (
+            enigma.plugboard[i] !== numberToLetter(i) &&
+            !ignoreIdxs.includes(i)
+          ) {
+            plugSet.push(numberToLetter(i));
+            plugSet.push(enigma.plugboard[i]);
+            ignoreIdxs.push(letterToNumber(enigma.plugboard[i]));
+          }
+        }
+        seed = (
+          reflector +
+          rotor3 +
+          rotor2 +
+          rotor1 +
+          ring3 +
+          ring2 +
+          ring1 +
+          rotorSet3 +
+          rotorSet2 +
+          rotorSet1 +
+          plugSet.join("")
+        ).toUpperCase();
+        return seed;
+      }
+
+      function validateSeed(seed) {
+        if (!"ABC".includes(seed[0])) {
+          return false;
+        }
+        if (!"ABCDE".includes(seed[1])) {
+          return false;
+        }
+        if (!"ABCDE".includes(seed[2])) {
+          return false;
+        }
+        if (!"ABCDE".includes(seed[3])) {
+          return false;
+        }
+        if (!"ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(seed[4])) {
+          return false;
+        }
+        if (!"ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(seed[5])) {
+          return false;
+        }
+        if (!"ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(seed[6])) {
+          return false;
+        }
+        if (!"ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(seed[7])) {
+          return false;
+        }
+        if (!"ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(seed[8])) {
+          return false;
+        }
+        if (!"ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(seed[9])) {
+          return false;
+        }
+        let seen = [];
+        for (let i = 10; i < seed.length; i++) {
+          if (
+            !"ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(seed[i]) &&
+            !seen.includes(seed[i])
+          ) {
+            return false;
+          }
+          seen.push(seed[i]);
+        }
+        return true;
+      }
+
+      function getRotorFromNum(num) {
+        if (num == 1) {
+          return rotor1;
+        } else if (num == 2) {
+          return rotor2;
+        } else if (num == 3) {
+          return rotor3;
+        } else if (num == 4) {
+          return rotor4;
+        } else if (num == 5) {
+          return rotor5;
+        }
+        throw "invalid number sent to getRotorFromNum()!";
+      }
+
+      function getReflectorFromLetter(letter) {
+        if (letter == "A") {
+          return reflectorA;
+        } else if (letter == "B") {
+          return reflectorB;
+        } else if (letter == "C") {
+          return reflectorC;
+        }
+        throw "invalid letter sent to getReflectorFromLetter!";
+      }
+
+      function swap(str, first, last) {
+        arr = str.split(""); //to array
+        var temp = arr[first];
+        arr[first] = arr[last];
+        arr[last] = temp;
+        arr = arr.join("").toString(); //to string
+        return arr;
+      }
+
+      function generateEnigma() {
+        let enigma = {
+          rotors: [rotor1, rotor2, rotor3],
+          rotorPositions: [0, 0, 0],
+          reflector: reflectorA,
+          plugboard: "abcdefghijklmnopqrstuvwxyz",
+          setRotor: function (rotorPos, rotorNum, update) {
+            console.log("set rotor " + rotorPos + " " + rotorNum);
+            this.rotors[rotorPos] = getRotorFromNum(rotorNum);
+            if (update) {
+              updateSeed();
+            }
+          },
+          setRotorPosition: function (rotorPos, rotorSetting, update) {
+            this.rotorPositions[rotorPos] = parseInt(rotorSetting) - 1; // -1 due to 1 index on enigma and 0 index in code
+            if (update) {
+              updateSeed();
+            }
+          },
+          setRingPosition: function (rotorPos, ringPosition, update) {
+            this.rotors[rotorPos].ringSetting = parseInt(ringPosition) - 1; // -1 due to 1 index on enigma and 0 index in code
+            if (update) {
+              updateSeed();
+            }
+          },
+          setReflector: function (letter, update) {
+            this.reflector = getReflectorFromLetter(letter);
+            if (update) {
+              updateSeed();
+            }
+          },
+          plugboardPass: function (absPos) {
+            return this.plugboard[absPos];
+          },
+          setPlugboard: function (idx, idx1, update) {
+            this.plugboard = swap(this.plugboard, idx, idx1);
+            if (update) {
+              updateSeed();
+            }
+          },
+          setFromSeed: function (seed) {
+            if (!validateSeed(seed)) {
+              throw "invalid seed!";
+            }
+            if (seed[0] === "A") {
+              this.reflector = reflectorA;
+              document.getElementById("reflectorSelect").value = "A";
+            } else if (seed[0] === "B") {
+              this.reflector = reflectorB;
+              document.getElementById("reflectorSelect").value = "B";
+            } else {
+              this.reflector = reflectorC;
+              document.getElementById("reflectorSelect").value = "C";
+            }
+            this.setRotor(2, letterToNumber(seed[1].toLowerCase()) + 1, false);
+            document.getElementById("rotor2Select").value = (
+              letterToNumber(seed[1].toLowerCase()) + 1
+            ).toString();
+            this.setRotor(1, letterToNumber(seed[2].toLowerCase()) + 1, false);
+            document.getElementById("rotor1Select").value = (
+              letterToNumber(seed[2].toLowerCase()) + 1
+            ).toString();
+            this.setRotor(0, letterToNumber(seed[3].toLowerCase()) + 1, false);
+            document.getElementById("rotor0Select").value = (
+              letterToNumber(seed[3].toLowerCase()) + 1
+            ).toString();
+
+            this.setRingPosition(2, letterToNumber(seed[4].toLowerCase()) + 1, false);
+            document.getElementById("rotor2Ring").value = (
+              letterToNumber(seed[4].toLowerCase()) + 1
+            ).toString();
+            this.setRingPosition(1, letterToNumber(seed[5].toLowerCase()) + 1, false);
+            document.getElementById("rotor1Ring").value = (
+              letterToNumber(seed[5].toLowerCase()) + 1
+            ).toString();
+            this.setRingPosition(0, letterToNumber(seed[6].toLowerCase()) + 1, false);
+            document.getElementById("rotor0Ring").value = (
+              letterToNumber(seed[6].toLowerCase()) + 1
+            ).toString();
+
+            this.setRotorPosition(2, letterToNumber(seed[7].toLowerCase()) + 1, false);
+            document.getElementById("rotor2Position").value = (
+              letterToNumber(seed[7].toLowerCase()) + 1
+            ).toString();
+            this.setRotorPosition(1, letterToNumber(seed[8].toLowerCase()) + 1, false);
+            document.getElementById("rotor1Position").value = (
+              letterToNumber(seed[8].toLowerCase()) + 1
+            ).toString();
+            this.setRotorPosition(0, letterToNumber(seed[9].toLowerCase()) + 1, false);
+            document.getElementById("rotor0Position").value = (
+              letterToNumber(seed[9].toLowerCase()) + 1
+            ).toString();
+
+            enigma.plugboard = "abcdefghijklmnopqrstuvwxyz";
+            plugSelect = null;
+            plugColor = 0;
+            for (let i = 10; i < seed.length; i++) {
+              keyboardClick(getKeyboardElementByVal(seed[i]), false);
+            }
+            
+          },
+        };
+
+        return enigma;
+      }
+      enigma = generateEnigma();
+      updateSeed();
+      lockedSeed = null;
+
+      function updateSeed() {
+        let seed = calculateSeed();
+        document.getElementById("seed-input").value = seed;
+      }
+
+      function mod(n, m) {
+        return ((n % m) + m) % m;
+      }
+
+      function letterToNumber(letter) {
+        if (
+          "abcdefghijklmnopqrstuvwxyz".includes(letter) &&
+          letter.length == 1
+        ) {
+          unicodeNum = letter.charCodeAt(0);
+          alphabetIndex = unicodeNum - 97; // Because "a" is coded as 97, so shift to 0
+          return alphabetIndex;
+        }
+        throw "error converting character to a number!";
+      }
+
+      function numberToLetter(number) {
+        if (number >= 0 && number <= 25) {
+          return String.fromCharCode(number + 97); // add 97 to go from alphabet idx to unicode code
+        }
+        throw "error converting number to a character!";
+      }
+
+      function updateRotors() {
+        if (enigma.rotorPositions[1] === enigma.rotors[1].turnoverIdx) {
+          enigma.rotorPositions[2] = (enigma.rotorPositions[2] + 1) % 26;
+          enigma.rotorPositions[1] = (enigma.rotorPositions[1] + 1) % 26; // Rotor 2 moves whenever rotor 3 moves, covers double step
+        }
+        if (enigma.rotorPositions[0] === enigma.rotors[0].turnoverIdx) {
+          enigma.rotorPositions[1] = (enigma.rotorPositions[1] + 1) % 26;
+        }
+        enigma.rotorPositions[0] = (enigma.rotorPositions[0] + 1) % 26;
+      }
+
+      function keypress(key) {
+        key = key.toLowerCase();
+
+        updateRotors();
+
+        absPos = letterToNumber(enigma.plugboardPass(letterToNumber(key)));
+
+        // Forward pass through rotors 3 2 1 <--
+        for (let i = 0; i < enigma.rotors.length; i++) {
+          absPos = mod(
+            letterToNumber(
+              enigma.rotors[i].map[
+                mod(
+                  absPos +
+                    enigma.rotorPositions[i] -
+                    enigma.rotors[i].ringSetting,
+                  26
+                )
+              ]
+            ) -
+              enigma.rotorPositions[i] +
+              enigma.rotors[i].ringSetting,
+            26
+          );
+        }
+
+        // Reflector A <--
+        absPos = letterToNumber(this.reflectorA[absPos]);
+
+        // Backward pass through rotors --> 3 2 1
+        for (let i = enigma.rotors.length - 1; i >= 0; i--) {
+          absPos = mod(
+            this.enigma.rotors[i].map.indexOf(
+              numberToLetter(
+                mod(
+                  absPos +
+                    enigma.rotorPositions[i] -
+                    enigma.rotors[i].ringSetting,
+                  26
+                )
+              )
+            ) -
+              enigma.rotorPositions[i] +
+              enigma.rotors[i].ringSetting,
+            26
+          );
+        }
+
+        absPos = enigma.plugboardPass(absPos);
+
+        return absPos;
+      }
+
+      function isLowerCase(str) {
+        return str == str.toLowerCase() && str != str.toUpperCase();
+      }
+
+      document
+        .getElementById("submit-button")
+        .addEventListener("click", (event) => {
+          text = document.getElementById("enigma-input").value;
+
+          for (let i = 0; i < text.length; i++) {
+            let symbol = text[i];
+            if (
+              "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(
+                symbol
+              )
+            ) {
+              let isUpper = true;
+              if (isLowerCase(symbol)) {
+                isUpper = false;
+              }
+
+              symbol = keypress(symbol);
+              if (isUpper) {
+                symbol = symbol.toUpperCase();
+              }
+            }
+            document.getElementById("enigma-out").innerHTML += symbol;
+          }
+          updateSeed();
+          enigma.setFromSeed(calculateSeed());
+        });
+
+      document
+        .getElementById("seed-submit-button")
+        .addEventListener("click", (event) => {
+          seed = document.getElementById("seed-input").value;
+          enigma.plugboard = "abcdefghijklmnopqrstuvwxyz";
+          plugSelect = null;
+          plugColor = 0;
+          enigma.setFromSeed(seed);
+        });
+
+      function getKeyboardElementByVal(value) {
+        let elements = document.getElementsByClassName("key");
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].innerHTML === value) {
+            return elements[i];
+          }
+        }
+        throw "could not find element!";
+      }
+
+      function keyboardClick(element, update) {
+        console.log(element);
+        let num = letterToNumber(element.innerHTML.toLowerCase());
+
+        if (plugSelect === null) {
+          if (letterToNumber(enigma.plugboard[num]) === num) {
+            plugSelect = element;
+            element.style.background = plugboardColors[plugColor];
+          } else {
+            let idx = num;
+            let idx1 = letterToNumber(enigma.plugboard[num]);
+            enigma.setPlugboard(idx, idx1, update);
+            getKeyboardElementByVal(
+              numberToLetter(idx1).toUpperCase()
+            ).style.background = "#b05b00";
+            element.style.background = "#b05b00";
+          }
+        } else {
+          let num1 = letterToNumber(plugSelect.innerHTML.toLowerCase());
+          if (num1 === num) {
+            element.style.background = "#b05b00";
+            plugSelect = null;
+            return;
+          }
+          if (letterToNumber(enigma.plugboard[num]) === num) {
+            element.style.background = plugboardColors[plugColor];
+            enigma.setPlugboard(num, num1, update);
+            plugSelect = null;
+            plugColor = mod(plugColor + 1, 13);
+          }
+        }
+      }
+
+      let elements = document.getElementsByClassName("key");
+      for (let i = 0; i < elements.length; i++) {
+        elements[i].addEventListener("click", (event) => {
+          keyboardClick(event.target, true);
+        });
+      }
+    </script>
+  </body>
+</html>
