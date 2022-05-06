@@ -326,15 +326,24 @@ class ViewHelper {
 
 class InputOutputView {
   view: HTMLElement;
+  input: HTMLTextAreaElement;
+  output: HTMLElement;
 
   constructor() {
     let helper = new ViewHelper();
     this.view = helper.createElement("div", "input-output-container");
-    let input = helper.createElement("textarea", "io-textarea") as HTMLTextAreaElement;
-    input.placeholder = "Input...";
-    let output = helper.createElement("textarea", "io-textarea") as HTMLTextAreaElement;
-    output.placeholder = "Output...";
-    this.view.append(input, output);
+    this.input = helper.createElement("textarea", "io-textarea") as HTMLTextAreaElement;
+    this.input.placeholder = "Input...";
+    this.output = helper.createElement("div");
+    this.output.innerHTML = "Output...";
+    this.view.append(this.input, this.output);
+  }
+
+  bindInputChanged(handler: (inputText: string) => string) {
+    this.input.addEventListener("input", event => {
+      // TODO validate this somewhere
+      this.output.innerHTML = handler(this.input.value);
+    })
   }
 }
 
@@ -386,13 +395,13 @@ class RotorOptionsView {
   }
 }
 
-class View {
+class EnigmaView {
   app: HTMLElement;
   title: HTMLElement;
   reflectorSelect: HTMLSelectElement;
   rotorOptionsView: HTMLElement;
   plugboardView: HTMLElement;
-  ioView: HTMLElement;
+  ioView: InputOutputView;
 
   constructor() {
     let helper = new ViewHelper();
@@ -404,7 +413,7 @@ class View {
     this.reflectorSelect = helper.createSelectStringOptions(["A", "B", "C"]);
     this.rotorOptionsView = helper.createElement("div", "rotor-options-holder");
     this.plugboardView = new AlphaOrthoKeyboardView().view;
-    this.ioView = new InputOutputView().view;
+    this.ioView = new InputOutputView();
 
     for (let i = 0; i < 3; i++) {
       let view = new RotorOptionsView();
@@ -416,18 +425,41 @@ class View {
       this.reflectorSelect,
       this.rotorOptionsView,
       this.plugboardView,
-      this.ioView
+      this.ioView.view
     );
+  }
+}
+
+class InputOutputController {
+  model: EnigmaModel;
+  view: InputOutputView;
+
+  constructor(model: EnigmaModel, view: InputOutputView) {
+    this.model = model;
+    this.view = view;
+    this.view.bindInputChanged(this.handleInputChanged);
+  }
+
+  handleInputChanged = (inputText: string): string => {
+    let output: string[] = [];
+    let lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key)));
+    for (let i = 0; i < inputText.length; i++) {
+      output.push(lettersKeys[this.model.pressKey(Letters[inputText[i].toUpperCase() as keyof typeof Letters])]);
+    }
+    console.log(output);
+    return output.join("");
   }
 }
 
 class Controller {
   model: EnigmaModel;
-  view: View;
+  view: EnigmaView;
+  inputOutputController: InputOutputController;
 
-  constructor(model: EnigmaModel, view: View) {
+  constructor(model: EnigmaModel, view: EnigmaView) {
     this.model = model;
     this.view = view;
+    this.inputOutputController = new InputOutputController(this.model, this.view.ioView);
   }
 }
 
@@ -448,4 +480,4 @@ let rotors = [new Rotor(rotorI), new Rotor(rotorII), new Rotor(rotorIII)];
 let plugboard = new Plugboard(emptyPlugboard);
 let enigmaModel = new EnigmaModel(reflector, rotors, plugboard);
 
-let app = new Controller(enigmaModel, new View());
+let app = new Controller(enigmaModel, new EnigmaView());

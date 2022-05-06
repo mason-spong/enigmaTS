@@ -105,6 +105,7 @@ a {
   justify-content: center; /* align horizontal */
   align-items: center; /* align vertical */
   touch-action: manipulation;
+  transition: 0.1s;
 }
 
 .input-output-container {
