@@ -130,12 +130,18 @@ class Rotor {
   turnoverIdx: number;
   ringSetting: number;
   rotorSetting: number;
+  lockRotorSetting: number;
 
   constructor(rotorConfig: RotorConfig) {
     this.wireMap = new WireMap(rotorConfig.wireMapSeed);
     this.turnoverIdx = rotorConfig.turnoverIdx;
     this.ringSetting = 0;
     this.rotorSetting = 0;
+    this.lockRotorSetting = this.rotorSetting;
+  }
+
+  resetRotorSettings() {
+    this.rotorSetting = this.lockRotorSetting;
   }
 
   rotorForwardPass(absolutePosition: Letters): Letters {
@@ -214,6 +220,12 @@ class EnigmaModel {
     this.reflector = reflector;
     this.rotors = rotors;
     this.plugboard = plugboard;
+  }
+
+  resetSettings() {
+    for (const rotor of this.rotors) {
+      rotor.resetRotorSettings();
+    }
   }
 
   pressKey(key: Letters): Letters {
@@ -332,7 +344,10 @@ class InputOutputView {
   constructor() {
     let helper = new ViewHelper();
     this.view = helper.createElement("div", "input-output-container");
-    this.input = helper.createElement("textarea", "io-textarea") as HTMLTextAreaElement;
+    this.input = helper.createElement(
+      "textarea",
+      "io-textarea"
+    ) as HTMLTextAreaElement;
     this.input.placeholder = "Input...";
     this.output = helper.createElement("div");
     this.output.innerHTML = "Output...";
@@ -340,10 +355,10 @@ class InputOutputView {
   }
 
   bindInputChanged(handler: (inputText: string) => string) {
-    this.input.addEventListener("input", event => {
+    this.input.addEventListener("input", (event) => {
       // TODO validate this somewhere
       this.output.innerHTML = handler(this.input.value);
-    })
+    });
   }
 }
 
@@ -433,21 +448,37 @@ class EnigmaView {
 class InputOutputController {
   model: EnigmaModel;
   view: InputOutputView;
+  lettersKeys: string[];
 
   constructor(model: EnigmaModel, view: InputOutputView) {
     this.model = model;
     this.view = view;
     this.view.bindInputChanged(this.handleInputChanged);
+    this.lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key)));
   }
 
   handleInputChanged = (inputText: string): string => {
+    this.model.resetSettings();
     let output: string[] = [];
-    let lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key)));
+
     for (let i = 0; i < inputText.length; i++) {
-      output.push(lettersKeys[this.model.pressKey(Letters[inputText[i].toUpperCase() as keyof typeof Letters])]);
+      let char = inputText[i];
+      if (this.lettersKeys.includes(char.toUpperCase())) {
+        char = this.lettersToChar(
+          this.model.pressKey(this.charToLetters(char))
+        );
+      }
+      output.push(char);
     }
-    console.log(output);
     return output.join("");
+  };
+
+  lettersToChar(letter: Letters): string {
+    return this.lettersKeys[letter];
+  }
+
+  charToLetters(char: string): Letters {
+    return Letters[char.toUpperCase() as keyof typeof Letters];
   }
 }
 
@@ -459,7 +490,10 @@ class Controller {
   constructor(model: EnigmaModel, view: EnigmaView) {
     this.model = model;
     this.view = view;
-    this.inputOutputController = new InputOutputController(this.model, this.view.ioView);
+    this.inputOutputController = new InputOutputController(
+      this.model,
+      this.view.ioView
+    );
   }
 }
 

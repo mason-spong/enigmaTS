@@ -110,6 +110,10 @@ class Rotor {
         this.turnoverIdx = rotorConfig.turnoverIdx;
         this.ringSetting = 0;
         this.rotorSetting = 0;
+        this.lockRotorSetting = this.rotorSetting;
+    }
+    resetRotorSettings() {
+        this.rotorSetting = this.lockRotorSetting;
     }
     rotorForwardPass(absolutePosition) {
         let relativePosition = mod(absolutePosition + this.rotorSetting - this.ringSetting, numEncipherableChars);
@@ -159,6 +163,11 @@ class EnigmaModel {
         this.reflector = reflector;
         this.rotors = rotors;
         this.plugboard = plugboard;
+    }
+    resetSettings() {
+        for (const rotor of this.rotors) {
+            rotor.resetRotorSettings();
+        }
     }
     pressKey(key) {
         // Rotate rotors
@@ -256,7 +265,7 @@ class InputOutputView {
         this.view.append(this.input, this.output);
     }
     bindInputChanged(handler) {
-        this.input.addEventListener("input", event => {
+        this.input.addEventListener("input", (event) => {
             // TODO validate this somewhere
             this.output.innerHTML = handler(this.input.value);
         });
@@ -317,17 +326,27 @@ class EnigmaView {
 class InputOutputController {
     constructor(model, view) {
         this.handleInputChanged = (inputText) => {
+            this.model.resetSettings();
             let output = [];
-            let lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key)));
             for (let i = 0; i < inputText.length; i++) {
-                output.push(lettersKeys[this.model.pressKey(Letters[inputText[i].toUpperCase()])]);
+                let char = inputText[i];
+                if (this.lettersKeys.includes(char.toUpperCase())) {
+                    char = this.lettersToChar(this.model.pressKey(this.charToLetters(char)));
+                }
+                output.push(char);
             }
-            console.log(output);
             return output.join("");
         };
         this.model = model;
         this.view = view;
         this.view.bindInputChanged(this.handleInputChanged);
+        this.lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key)));
+    }
+    lettersToChar(letter) {
+        return this.lettersKeys[letter];
+    }
+    charToLetters(char) {
+        return Letters[char.toUpperCase()];
     }
 }
 class Controller {
