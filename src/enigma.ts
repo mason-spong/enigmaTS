@@ -165,15 +165,23 @@ class Rotor {
   }
 }
 
-// TODO refactor to use config instead of wireMap directly
+class PlugboardConfig {
+  wireMapSeed: string;
+
+  constructor(wireMapSeed: string) {
+    this.wireMapSeed = wireMapSeed;
+  }
+}
+
 class Plugboard {
   wireMap: WireMap;
 
-  constructor(wireMap: WireMap) {
-    if (!this.isValidPlugboardWireMap(wireMap)) {
+  constructor(plugboardConfig: PlugboardConfig) {
+    let map = new WireMap(plugboardConfig.wireMapSeed);
+    if (!this.isValidPlugboardWireMap(map)) {
       throw new Error("Invalid WireMap given to Plugboard!");
     }
-    this.wireMap = wireMap;
+    this.wireMap = map;
   }
 
   plugboardPass(letter: Letters): Letters {
@@ -283,7 +291,9 @@ const rotorIII = new RotorConfig("BDFHJLCPRTXVZNYEIWGAKMUSQO", 21);
 const rotorIV = new RotorConfig("ESOVPZJAYQUIRHXLNFTGKDCMWB", 9);
 const rotorV = new RotorConfig("VZBRGITYUPSDNHLXAWMJQOFECK", 25);
 
+const emptyPlugboard = new PlugboardConfig("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
 let reflector = new Reflector(reflectorA);
 let rotors = [new Rotor(rotorI), new Rotor(rotorII), new Rotor(rotorIII)];
-let plugboard = new Plugboard(new WireMap("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
+let plugboard = new Plugboard(emptyPlugboard);
 let enigmaModel = new EnigmaModel(reflector, rotors, plugboard);
