@@ -245,6 +245,21 @@ class ViewHelper {
         throw new Error("Could not find specified element");
     }
 }
+class AlphaOrthoKeyboardView {
+    constructor() {
+        let helper = new ViewHelper();
+        this.view = helper.createElement("div", "key-container");
+        let charSet = "QWERTYUIOPASDFGHJKLZXCVBNM";
+        for (let i = 0; i < charSet.length; i++) {
+            let key = helper.createElement("div", "key");
+            key.textContent = charSet[i];
+            this.view.append(key);
+            if (charSet[i] === "L") {
+                this.view.append(helper.createElement("div"));
+            }
+        }
+    }
+}
 class RotorOptionsView {
     constructor() {
         let helper = new ViewHelper();
@@ -267,11 +282,12 @@ class View {
         this.title.textContent = "enigma machine";
         this.reflectorSelect = helper.createSelectStringOptions(["A", "B", "C"]);
         this.rotorOptionsView = helper.createElement("div", "rotor-options-holder");
+        this.plugboardView = new AlphaOrthoKeyboardView().view;
         for (let i = 0; i < 3; i++) {
             let view = new RotorOptionsView();
             this.rotorOptionsView.append(view.container);
         }
-        this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView);
+        this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView, this.plugboardView);
     }
 }
 class Controller {

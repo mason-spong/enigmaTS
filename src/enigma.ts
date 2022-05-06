@@ -321,6 +321,24 @@ class ViewHelper {
   }
 }
 
+class AlphaOrthoKeyboardView {
+  view: HTMLElement;
+
+  constructor() {
+    let helper = new ViewHelper();
+    this.view = helper.createElement("div", "key-container");
+    let charSet = "QWERTYUIOPASDFGHJKLZXCVBNM";
+    for (let i = 0; i < charSet.length; i++) {
+      let key = helper.createElement("div", "key");
+      key.textContent = charSet[i];
+      this.view.append(key);
+      if (charSet[i] === "L") {
+        this.view.append(helper.createElement("div"));
+      } 
+    }
+  }
+}
+
 class RotorOptionsView {
   container: HTMLElement;
   typeSelect: HTMLSelectElement;
@@ -346,6 +364,7 @@ class View {
   title: HTMLElement;
   reflectorSelect: HTMLSelectElement;
   rotorOptionsView: HTMLElement;
+  plugboardView: HTMLElement;
 
 
   constructor() {
@@ -357,14 +376,14 @@ class View {
 
     this.reflectorSelect = helper.createSelectStringOptions(["A", "B", "C"]);
     this.rotorOptionsView = helper.createElement("div", "rotor-options-holder")
-    
+    this.plugboardView = new AlphaOrthoKeyboardView().view;
 
     for (let i = 0; i < 3; i++) {
       let view = new RotorOptionsView();
       this.rotorOptionsView.append(view.container);
     }
 
-    this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView);
+    this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView, this.plugboardView);
 
   }
 }
