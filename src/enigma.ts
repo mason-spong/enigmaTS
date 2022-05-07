@@ -410,12 +410,44 @@ class RotorOptionsView {
   }
 }
 
+class ReflectorOptionsView {
+  view: HTMLSelectElement;
+
+  constructor() {
+    let helper = new ViewHelper();
+    this.view = helper.createSelectStringOptions(["A", "B", "C"]);
+  }
+}
+
+class EnigmaOptionsView {
+  reflectorOptionsView: ReflectorOptionsView;
+  rotorOptionsViews: RotorOptionsView[];
+  rotorOptionsHolder: HTMLElement;
+  view: HTMLElement;
+
+  constructor() {
+    let helper = new ViewHelper();
+    this.rotorOptionsHolder = helper.createElement(
+      "div",
+      "rotor-options-holder"
+    );
+    this.view = helper.createElement("div", "enigma-options-holder");
+    this.reflectorOptionsView = new ReflectorOptionsView();
+    this.rotorOptionsViews = [];
+    for (let i = 0; i < 3; i++) {
+      let view = new RotorOptionsView();
+      this.rotorOptionsHolder.append(view.container);
+      this.rotorOptionsViews.push(view);
+    }
+    this.view.append(this.reflectorOptionsView.view, this.rotorOptionsHolder);
+  }
+}
+
 class EnigmaView {
   app: HTMLElement;
   title: HTMLElement;
-  reflectorSelect: HTMLSelectElement;
-  rotorOptionsView: HTMLElement;
-  plugboardView: HTMLElement;
+  enigmaOptionsView: EnigmaOptionsView;
+  plugboardView: AlphaOrthoKeyboardView;
   ioView: InputOutputView;
 
   constructor() {
@@ -424,22 +456,14 @@ class EnigmaView {
 
     this.title = helper.createElement("h1");
     this.title.textContent = "enigma machine";
-
-    this.reflectorSelect = helper.createSelectStringOptions(["A", "B", "C"]);
-    this.rotorOptionsView = helper.createElement("div", "rotor-options-holder");
-    this.plugboardView = new AlphaOrthoKeyboardView().view;
+    this.enigmaOptionsView = new EnigmaOptionsView();
+    this.plugboardView = new AlphaOrthoKeyboardView();
     this.ioView = new InputOutputView();
-
-    for (let i = 0; i < 3; i++) {
-      let view = new RotorOptionsView();
-      this.rotorOptionsView.append(view.container);
-    }
 
     this.app.append(
       this.title,
-      this.reflectorSelect,
-      this.rotorOptionsView,
-      this.plugboardView,
+      this.enigmaOptionsView.view,
+      this.plugboardView.view,
       this.ioView.view
     );
   }

@@ -306,21 +306,37 @@ class RotorOptionsView {
         this.container.append(this.typeSelect, this.ringSelect, this.positionSelect);
     }
 }
+class ReflectorOptionsView {
+    constructor() {
+        let helper = new ViewHelper();
+        this.view = helper.createSelectStringOptions(["A", "B", "C"]);
+    }
+}
+class EnigmaOptionsView {
+    constructor() {
+        let helper = new ViewHelper();
+        this.rotorOptionsHolder = helper.createElement("div", "rotor-options-holder");
+        this.view = helper.createElement("div", "enigma-options-holder");
+        this.reflectorOptionsView = new ReflectorOptionsView();
+        this.rotorOptionsViews = [];
+        for (let i = 0; i < 3; i++) {
+            let view = new RotorOptionsView();
+            this.rotorOptionsHolder.append(view.container);
+            this.rotorOptionsViews.push(view);
+        }
+        this.view.append(this.reflectorOptionsView.view, this.rotorOptionsHolder);
+    }
+}
 class EnigmaView {
     constructor() {
         let helper = new ViewHelper();
         this.app = helper.getElement("#root");
         this.title = helper.createElement("h1");
         this.title.textContent = "enigma machine";
-        this.reflectorSelect = helper.createSelectStringOptions(["A", "B", "C"]);
-        this.rotorOptionsView = helper.createElement("div", "rotor-options-holder");
-        this.plugboardView = new AlphaOrthoKeyboardView().view;
+        this.enigmaOptionsView = new EnigmaOptionsView();
+        this.plugboardView = new AlphaOrthoKeyboardView();
         this.ioView = new InputOutputView();
-        for (let i = 0; i < 3; i++) {
-            let view = new RotorOptionsView();
-            this.rotorOptionsView.append(view.container);
-        }
-        this.app.append(this.title, this.reflectorSelect, this.rotorOptionsView, this.plugboardView, this.ioView.view);
+        this.app.append(this.title, this.enigmaOptionsView.view, this.plugboardView.view, this.ioView.view);
     }
 }
 class InputOutputController {
