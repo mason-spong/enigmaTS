@@ -29,6 +29,13 @@ var Letters;
     Letters[Letters["Y"] = 24] = "Y";
     Letters[Letters["Z"] = 25] = "Z";
 })(Letters || (Letters = {}));
+function lettersToChar(letter) {
+    let lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key))); // Disregard reverse enum map num -> key
+    return lettersKeys[letter];
+}
+function charToLetters(char) {
+    return Letters[char.toUpperCase()];
+}
 // Helper function to ensure % does not produce negative numbers
 function mod(n, m) {
     return ((n % m) + m) % m;
@@ -135,6 +142,7 @@ class PlugboardConfig {
 }
 class Plugboard {
     constructor(plugboardConfig) {
+        this.currentSelection = null;
         let map = new WireMap(plugboardConfig.wireMapSeed);
         if (!this.isValidPlugboardWireMap(map)) {
             throw new Error("Invalid WireMap given to Plugboard!");
@@ -271,18 +279,57 @@ class InputOutputView {
         });
     }
 }
+const plugboardColors = [
+    "#332288",
+    "#117733",
+    "#44AA99",
+    "#88CCEE",
+    "#DDCC77",
+    "#CC6677",
+    "#AA4499",
+    "#882255",
+    "#648FFF",
+    "#785EF0",
+    "#DC267F",
+    "#FE6100",
+    "#FFB000",
+];
+class ColorLink {
+    constructor(link, color) {
+        this.link = link;
+        this.color = color;
+    }
+}
 class AlphaOrthoKeyboardView {
     constructor() {
         let helper = new ViewHelper();
         this.view = helper.createElement("div", "key-container");
+        this.keys = new Map();
         let charSet = "QWERTYUIOPASDFGHJKLZXCVBNM";
         for (let i = 0; i < charSet.length; i++) {
             let key = helper.createElement("div", "key");
             key.textContent = charSet[i];
             this.view.append(key);
+            this.keys.set(charSet[i], key);
             if (charSet[i] === "L") {
                 this.view.append(helper.createElement("div"));
             }
+        }
+    }
+    setColor(key, color) {
+        let keyElement = this.keys.get(key);
+        if (keyElement !== undefined) {
+            keyElement.style.backgroundColor = color;
+        }
+    }
+    bindKeyboardClicked(handler) {
+        for (let [key, value] of this.keys) {
+            value.addEventListener("click", (event) => {
+                if (event.target instanceof Element) {
+                    handler(key);
+                    console.log(event.target.innerHTML);
+                }
+            });
         }
     }
 }
@@ -309,6 +356,7 @@ class RotorOptionsView {
 class ReflectorOptionsView {
     constructor() {
         let helper = new ViewHelper();
+        // TODO don't hard code ABC
         this.view = helper.createSelectStringOptions(["A", "B", "C"]);
     }
 }
@@ -339,6 +387,57 @@ class EnigmaView {
         this.app.append(this.title, this.enigmaOptionsView.view, this.plugboardView.view, this.ioView.view);
     }
 }
+class PlugboardController {
+    constructor(model, view) {
+        this.plugboardColors = [
+            "#332288",
+            "#117733",
+            "#44AA99",
+            "#88CCEE",
+            "#DDCC77",
+            "#CC6677",
+            "#AA4499",
+            "#882255",
+            "#648FFF",
+            "#785EF0",
+            "#DC267F",
+            "#FE6100",
+            "#FFB000",
+        ];
+        this.colorIdx = 0;
+        // Hard coding colors is probably bad
+        this.backgroundColor = "#b05b00";
+        this.handleKeyClicked = (keyClicked) => {
+            let letter = charToLetters(keyClicked);
+            console.log(this);
+            console.log(this.model);
+            if (this.model.plugboard.currentSelection !== null) {
+                // This is second click
+                if (this.model.plugboard.wireMap.getAtIdx(letter) !== letter) {
+                    // The clicked key has previously been swapped
+                }
+                else {
+                    // The clicked key has not been swapped
+                }
+            }
+            else {
+                // This is the first click
+                if (this.model.plugboard.wireMap.getAtIdx(letter) !== letter) {
+                    // the clicked key has been swapped
+                }
+                else {
+                    // the clicked key has not been swapped
+                    this.model.plugboard.currentSelection = letter;
+                    this.view.setColor(lettersToChar(letter), this.plugboardColors[this.colorIdx]);
+                }
+            }
+            return Letters.A;
+        };
+        this.model = model;
+        this.view = view;
+        this.view.bindKeyboardClicked(this.handleKeyClicked);
+    }
+}
 class InputOutputController {
     constructor(model, view) {
         this.handleInputChanged = (inputText) => {
@@ -347,7 +446,7 @@ class InputOutputController {
             for (let i = 0; i < inputText.length; i++) {
                 let char = inputText[i];
                 if (this.lettersKeys.includes(char.toUpperCase())) {
-                    char = this.lettersToChar(this.model.pressKey(this.charToLetters(char)));
+                    char = lettersToChar(this.model.pressKey(charToLetters(char)));
                 }
                 output.push(char);
             }
@@ -358,17 +457,12 @@ class InputOutputController {
         this.view.bindInputChanged(this.handleInputChanged);
         this.lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key)));
     }
-    lettersToChar(letter) {
-        return this.lettersKeys[letter];
-    }
-    charToLetters(char) {
-        return Letters[char.toUpperCase()];
-    }
 }
 class Controller {
     constructor(model, view) {
         this.model = model;
         this.view = view;
+        this.plugboardController = new PlugboardController(this.model, this.view.plugboardView);
         this.inputOutputController = new InputOutputController(this.model, this.view.ioView);
     }
 }
