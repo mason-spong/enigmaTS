@@ -69,7 +69,8 @@ class WireMap {
   }
 
   swap(letter1: Letters, letter2: Letters) {
-    
+    this.map[letter1] = letter2;
+    this.map[letter2] = letter1;
   }
 
   private isValidMapString(mapString: string): boolean {
@@ -579,6 +580,10 @@ class PlugboardController {
 
       } else {
         // The clicked key has not been swapped
+        this.model.plugboard.wireMap.swap(this.model.plugboard.currentSelection, letter);
+        this.view.setColor(lettersToChar(letter), this.plugboardColors[this.colorIdx]);
+        this.colorIdx = (this.colorIdx + 1) % this.plugboardColors.length
+        this.model.plugboard.currentSelection = null;
 
       }
     } else {

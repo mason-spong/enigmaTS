@@ -60,6 +60,8 @@ class WireMap {
         return this.map.indexOf(letter);
     }
     swap(letter1, letter2) {
+        this.map[letter1] = letter2;
+        this.map[letter2] = letter1;
     }
     isValidMapString(mapString) {
         let lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key))); // Disregard reverse enum map num -> key
@@ -423,6 +425,10 @@ class PlugboardController {
                 }
                 else {
                     // The clicked key has not been swapped
+                    this.model.plugboard.wireMap.swap(this.model.plugboard.currentSelection, letter);
+                    this.view.setColor(lettersToChar(letter), this.plugboardColors[this.colorIdx]);
+                    this.colorIdx = (this.colorIdx + 1) % this.plugboardColors.length;
+                    this.model.plugboard.currentSelection = null;
                 }
             }
             else {
