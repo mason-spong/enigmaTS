@@ -30,7 +30,9 @@ var Letters;
     Letters[Letters["Z"] = 25] = "Z";
 })(Letters || (Letters = {}));
 function lettersToChar(letter) {
-    let lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key))); // Disregard reverse enum map num -> key
+    // Disregard reverse enum map num -> key
+    // TODO: Cach lettersKeys
+    let lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key)));
     return lettersKeys[letter];
 }
 function charToLetters(char) {
@@ -415,6 +417,7 @@ class PlugboardController {
             console.log(this.model);
             if (this.model.plugboard.currentSelection !== null) {
                 // This is second click
+                console.log("second click");
                 if (this.model.plugboard.wireMap.getAtIdx(letter) !== letter) {
                     // The clicked key has previously been swapped
                 }
@@ -424,6 +427,7 @@ class PlugboardController {
             }
             else {
                 // This is the first click
+                console.log("first click");
                 if (this.model.plugboard.wireMap.getAtIdx(letter) !== letter) {
                     // the clicked key has been swapped
                     this.model.plugboard.wireMap;
