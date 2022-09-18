@@ -57,6 +57,8 @@ class WireMap {
     indexOf(letter) {
         return this.map.indexOf(letter);
     }
+    swap(letter1, letter2) {
+    }
     isValidMapString(mapString) {
         let lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key))); // Disregard reverse enum map num -> key
         if (mapString.length !== lettersKeys.length) {
@@ -424,6 +426,7 @@ class PlugboardController {
                 // This is the first click
                 if (this.model.plugboard.wireMap.getAtIdx(letter) !== letter) {
                     // the clicked key has been swapped
+                    this.model.plugboard.wireMap;
                 }
                 else {
                     // the clicked key has not been swapped
