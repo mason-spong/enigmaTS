@@ -177,6 +177,9 @@ class EnigmaModel {
         this.rotors = rotors;
         this.plugboard = plugboard;
     }
+    changeReflector(reflector) {
+        this.reflector = reflector;
+    }
     resetSettings() {
         for (const rotor of this.rotors) {
             rotor.resetRotorSettings();
@@ -364,6 +367,12 @@ class ReflectorOptionsView {
         // TODO don't hard code ABC
         this.view = helper.createSelectStringOptions(["A", "B", "C"]);
     }
+    bindReflectorChanged(handler) {
+        this.view.addEventListener("change", (event) => {
+            // TODO validate this somewhere
+            handler(this.view.value);
+        });
+    }
 }
 class EnigmaOptionsView {
     constructor() {
@@ -477,12 +486,30 @@ class InputOutputController {
         this.lettersKeys = Object.keys(Letters).filter((key) => isNaN(Number(key)));
     }
 }
+class ReflectorOptionsController {
+    constructor(model, view) {
+        this.reflectors = {
+            A: new Reflector(new ReflectorConfig("EJMZALYXVBWFCRQUONTSPIKHGD")),
+            B: new Reflector(new ReflectorConfig("YRUHQSLDPXNGOKMIEBFZCWVJAT")),
+            C: new Reflector(new ReflectorConfig("FVPJIAOYEDRZXWGCTKUQSBNMHL"))
+        };
+        this.handleReflectorChanged = (selectionChar) => {
+            if (Object.keys(this.reflectors).includes(selectionChar)) {
+                this.model.changeReflector(this.reflectors[selectionChar]);
+            }
+        };
+        this.model = model;
+        this.view = view;
+        this.view.bindReflectorChanged(this.handleReflectorChanged);
+    }
+}
 class Controller {
     constructor(model, view) {
         this.model = model;
         this.view = view;
         this.plugboardController = new PlugboardController(this.model, this.view.plugboardView);
         this.inputOutputController = new InputOutputController(this.model, this.view.ioView);
+        this.reflectorOptionsController = new ReflectorOptionsController(this.model, this.view.enigmaOptionsView.reflectorOptionsView);
     }
 }
 const reflectorA = new ReflectorConfig("EJMZALYXVBWFCRQUONTSPIKHGD");

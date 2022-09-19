@@ -241,6 +241,10 @@ class EnigmaModel {
     this.plugboard = plugboard;
   }
 
+  changeReflector(reflector: Reflector) {
+    this.reflector = reflector;
+  }
+
   resetSettings() {
     for (const rotor of this.rotors) {
       rotor.resetRotorSettings();
@@ -486,6 +490,14 @@ class ReflectorOptionsView {
     // TODO don't hard code ABC
     this.view = helper.createSelectStringOptions(["A", "B", "C"]);
   }
+
+  bindReflectorChanged(handler: (inputText: string) => void) {
+    this.view.addEventListener("change", (event) => {
+      // TODO validate this somewhere
+      handler(this.view.value);
+    });
+  }
+
 }
 
 class EnigmaOptionsView {
@@ -636,11 +648,35 @@ class InputOutputController {
   };
 }
 
+class ReflectorOptionsController {
+  model: EnigmaModel;
+  view: ReflectorOptionsView;
+  reflectors = {
+    A: new Reflector(new ReflectorConfig("EJMZALYXVBWFCRQUONTSPIKHGD")),
+    B: new Reflector(new ReflectorConfig("YRUHQSLDPXNGOKMIEBFZCWVJAT")),
+    C: new Reflector(new ReflectorConfig("FVPJIAOYEDRZXWGCTKUQSBNMHL"))
+  }
+
+  constructor(model: EnigmaModel, view: ReflectorOptionsView) {
+    this.model = model;
+    this.view = view;
+    this.view.bindReflectorChanged(this.handleReflectorChanged);
+  }
+
+  handleReflectorChanged = (selectionChar: string): void => {
+    if (Object.keys(this.reflectors).includes(selectionChar)) {
+      this.model.changeReflector(this.reflectors[selectionChar as keyof typeof this.reflectors]);
+    }
+    
+  }
+}
+
 class Controller {
   model: EnigmaModel;
   view: EnigmaView;
   inputOutputController: InputOutputController;
   plugboardController: PlugboardController;
+  reflectorOptionsController: ReflectorOptionsController;
 
   constructor(model: EnigmaModel, view: EnigmaView) {
     this.model = model;
@@ -650,6 +686,7 @@ class Controller {
       this.model,
       this.view.ioView
     );
+    this.reflectorOptionsController = new ReflectorOptionsController(this.model, this.view.enigmaOptionsView.reflectorOptionsView);
 
 
   }
