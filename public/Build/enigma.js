@@ -180,6 +180,9 @@ class EnigmaModel {
     changeReflector(reflector) {
         this.reflector = reflector;
     }
+    changeRotor(rotor, rotorIdx) {
+        this.rotors[rotorIdx] = rotor;
+    }
     resetSettings() {
         for (const rotor of this.rotors) {
             rotor.resetRotorSettings();
@@ -341,11 +344,29 @@ class AlphaOrthoKeyboardView {
         }
     }
 }
-class RotorOptionsView {
+class RotorTypeSelectView {
     constructor() {
         let helper = new ViewHelper();
-        this.container = helper.createElement("div");
-        this.container.classList.add("rotor-options-container");
+        this.view = helper.createSelectStringOptions([
+            "I",
+            "II",
+            "III",
+            "IV",
+            "V",
+        ]);
+        this.view.classList.add("rotor-select");
+    }
+    bindTypeSelectChanged(handler) {
+        this.view.addEventListener("change", (event) => {
+            handler(this.view.value);
+        });
+    }
+}
+class RotorOptionsView {
+    constructor(rotorNumber) {
+        let helper = new ViewHelper();
+        this.view = helper.createElement("div");
+        this.view.classList.add("rotor-options-container");
         this.typeSelect = helper.createSelectStringOptions([
             "I",
             "II",
@@ -358,7 +379,13 @@ class RotorOptionsView {
         this.ringSelect.classList.add("rotor-select");
         this.positionSelect = helper.createSelectRangeOptions(1, 27);
         this.positionSelect.classList.add("rotor-select");
-        this.container.append(this.typeSelect, this.ringSelect, this.positionSelect);
+        this.view.append(this.typeSelect, this.ringSelect, this.positionSelect);
+        this.rotorNumber = rotorNumber;
+    }
+    bindRotorChanged(handler) {
+        this.view.addEventListener("change", (event) => {
+            handler(this.view.value);
+        });
     }
 }
 class ReflectorOptionsView {
@@ -382,7 +409,7 @@ class EnigmaOptionsView {
         this.reflectorOptionsView = new ReflectorOptionsView();
         this.rotorOptionsViews = [];
         for (let i = 0; i < 3; i++) {
-            let view = new RotorOptionsView();
+            let view = new RotorOptionsView(i);
             this.rotorOptionsHolder.append(view.container);
             this.rotorOptionsViews.push(view);
         }
@@ -503,6 +530,25 @@ class ReflectorOptionsController {
         this.view.bindReflectorChanged(this.handleReflectorChanged);
     }
 }
+class RotorOptionsController {
+    constructor(model, view) {
+        this.rotors = {
+            I: new RotorConfig("EKMFLGDQVZNTOWYHXUSPAIBRCJ", 16),
+            II: new RotorConfig("AJDKSIRUXBLHWTMCQGZNPYFVOE", 4),
+            III: new RotorConfig("BDFHJLCPRTXVZNYEIWGAKMUSQO", 21),
+            IV: new RotorConfig("ESOVPZJAYQUIRHXLNFTGKDCMWB", 9),
+            V: new RotorConfig("VZBRGITYUPSDNHLXAWMJQOFECK", 25)
+        };
+        this.handleRotorChanged = (selectionChar, rotorNumber) => {
+            if (Object.keys(this.rotors).includes(selectionChar)) {
+                this.model.changeRotor(this.rotors[selectionChar], rotorNumber);
+            }
+        };
+        this.model = model;
+        this.view = view;
+        this.view.bindRotorChanged(this.handleRotorChanged);
+    }
+}
 class Controller {
     constructor(model, view) {
         this.model = model;
@@ -510,6 +556,7 @@ class Controller {
         this.plugboardController = new PlugboardController(this.model, this.view.plugboardView);
         this.inputOutputController = new InputOutputController(this.model, this.view.ioView);
         this.reflectorOptionsController = new ReflectorOptionsController(this.model, this.view.enigmaOptionsView.reflectorOptionsView);
+        this.rotorOptionsController = new RotorOptionsController(this.model, this.view.enigmaOptionsView.rotorOptionsView);
     }
 }
 const reflectorA = new ReflectorConfig("EJMZALYXVBWFCRQUONTSPIKHGD");

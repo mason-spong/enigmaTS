@@ -159,6 +159,14 @@ class Rotor {
     this.rotorSetting = this.lockRotorSetting;
   }
 
+  setRingSetting(ringSetting: number) {
+    this.ringSetting = ringSetting; 
+  }
+
+  setRotorPosition(rotorSetting: number) {
+    this.rotorSetting = rotorSetting;
+  }
+
   rotorForwardPass(absolutePosition: Letters): Letters {
     let relativePosition = mod(
       absolutePosition + this.rotorSetting - this.ringSetting,
@@ -243,6 +251,21 @@ class EnigmaModel {
 
   changeReflector(reflector: Reflector) {
     this.reflector = reflector;
+  }
+
+  changeRotor(rotor: Rotor, rotorIdx: number) {
+    const oldRotorRing = this.rotors[rotorIdx].ringSetting;
+    const oldRotorPosition = this.rotors[rotorIdx].rotorSetting;
+    this.rotors[rotorIdx] = rotor; 
+    
+  }
+
+  changeRotorRing(ringSetting: number, rotorIdx: number) {
+    this.rotors[rotorIdx].setRingSetting(ringSetting);  
+  }
+
+  changeRotorPosition(positionSetting: number, rotorIdx: number) {
+    this.rotors[rotorIdx].setPositionSetting(positionSetting);
   }
 
   resetSettings() {
@@ -385,32 +408,6 @@ class InputOutputView {
   }
 }
 
-const plugboardColors = [
-  "#332288",
-  "#117733",
-  "#44AA99",
-  "#88CCEE",
-  "#DDCC77",
-  "#CC6677",
-  "#AA4499",
-  "#882255",
-  "#648FFF",
-  "#785EF0",
-  "#DC267F",
-  "#FE6100",
-  "#FFB000",
-];
-
-class ColorLink {
-  link: Letters[];
-  color: string;
-
-  constructor(link: Letters[], color: string) {
-    this.link = link;
-    this.color = color;
-  }
-}
-
 class AlphaOrthoKeyboardView {
   view: HTMLElement;
   keys: Map<string, HTMLElement>;
@@ -452,33 +449,94 @@ class AlphaOrthoKeyboardView {
   }
 }
 
-class RotorOptionsView {
-  container: HTMLElement;
-  typeSelect: HTMLSelectElement;
-  ringSelect: HTMLSelectElement;
-  positionSelect: HTMLSelectElement;
+class RotorTypeSelectView {
+  view: HTMLSelectElement;
+  rotorNumber: number;
 
-  constructor() {
+  constructor(rotorNumber: number) {
     let helper = new ViewHelper();
-    this.container = helper.createElement("div");
-    this.container.classList.add("rotor-options-container");
-    this.typeSelect = helper.createSelectStringOptions([
+    this.view = helper.createSelectStringOptions([
       "I",
       "II",
       "III",
       "IV",
       "V",
     ]);
-    this.typeSelect.classList.add("rotor-select");
+    this.view.classList.add("rotor-select");
+    this.rotorNumber = rotorNumber;
+  }
+
+  bindTypeSelectChanged(handler: (inputText: string, rotorNumber: number) => void) {
+    this.view.addEventListener("change", (event) => {
+      handler(this.view.value, this.rotorNumber);
+    });
+  }
+}
+
+class RotorRingSelectView {
+  view: HTMLSelectElement;
+  rotorNumber: number;
+
+  constructor(rotorNumber: number) {
+    let helper = new ViewHelper();
     this.ringSelect = helper.createSelectRangeOptions(1, 27);
     this.ringSelect.classList.add("rotor-select");
+    this.rotorNumber: rotorNumber;
+
+  }
+
+  bindRingSelectChanged(handler: (inputText: string, rotorNumber: number) => void) {
+    this.view.addEventListener("change", (event) => {
+      handler(this.view.value, this.rotorNumber);
+    });
+  }
+}
+
+class RotorPositionSelectView {
+  view: HTMLSelectElement;
+  rotorNumber: number;
+
+  constructor(rotorNumber: number) {
+    let helper = new ViewHelper();
     this.positionSelect = helper.createSelectRangeOptions(1, 27);
     this.positionSelect.classList.add("rotor-select");
-    this.container.append(
+    this.rotorNumber = rotorNumber;
+
+  }
+
+  bindPositionSelectChanged(handler: (inputText: string, rotorNumber: number) => void) {
+    this.view.addEventListener("change", (event) => {
+      handler(this.view.value, this.rotorNumber);
+    });
+  }
+}
+
+class RotorOptionsView {
+  view: HTMLElement;
+  typeSelectView: RotorTypeSelectView();
+  ringSelectView: RotorRingSelectView();
+  positionSelectView: RotorPositionSelectView();
+  rotorNumber: number
+
+  constructor(rotorNumber: number) {
+    let helper = new ViewHelper();
+    this.view = helper.createElement("div");
+    this.view.classList.add("rotor-options-container");
+    this.typeSelect = new RotorTypeSelectView();
+    this.ringSelect = new RotorRingSelectView();
+    this.positionSelect = new RotorPositionSelectView();
+    this.view.append(
       this.typeSelect,
       this.ringSelect,
       this.positionSelect
     );
+    this.rotorNumber = rotorNumber;
+  }
+  
+  bindRotorChanged(handler: (inputText: string, rotorNumber: number) => void) {
+    this.view.addEventListener("change", (event) => {
+      handler(this.view.value, this.rotorNumber);
+    });
   }
 }
 
@@ -516,7 +574,7 @@ class EnigmaOptionsView {
     this.reflectorOptionsView = new ReflectorOptionsView();
     this.rotorOptionsViews = [];
     for (let i = 0; i < 3; i++) {
-      let view = new RotorOptionsView();
+      let view = new RotorOptionsView(i);
       this.rotorOptionsHolder.append(view.container);
       this.rotorOptionsViews.push(view);
     }
@@ -671,12 +729,54 @@ class ReflectorOptionsController {
   }
 }
 
+class RotorOptionsController {
+  model: EnigmaModel;
+  view: RotorOptionsView;
+  rotors = {
+    I: new Rotor(new RotorConfig("EKMFLGDQVZNTOWYHXUSPAIBRCJ", 16)),
+    II: new Rotor(new RotorConfig("AJDKSIRUXBLHWTMCQGZNPYFVOE", 4)),
+    III: new Rotor(new RotorConfig("BDFHJLCPRTXVZNYEIWGAKMUSQO", 21)),
+    IV: new Rotor(new RotorConfig("ESOVPZJAYQUIRHXLNFTGKDCMWB", 9)),
+    V: new Rotor(new RotorConfig("VZBRGITYUPSDNHLXAWMJQOFECK", 25))
+  }
+  ringPosMin = 1;
+  ringPosMax = 27;
+
+
+  constructor(model: EnigmaModel, view: RotorOptionsView) {
+    this.model = model;
+    this.view = view;
+    this.view.typeSelectView.bindTypeSelectChanged(this.handleTypeSelectChanged);
+    this.view.ringSelectView.bindRingSelectChanged(this.handleRingSelectChanged);
+    this.view.positionSelectView.bindPositionSelectChanged(this.handlePositionSelectChanged);
+  }
+
+  handleTypeSelectChanged = (selectionChar: string, rotorNumber: number): void => {
+    if (Object.keys(this.rotors).includes(selectionChar)) {
+      this.model.changeRotor(this.rotors[selectionChar as keyof typeof this.rotors], rotorNumber);
+      
+    }
+  }
+
+  handleRingSelectChanged = (selectionChar: string, rotorNumber: number): void => {
+    const selectionNum = +selectionChar;
+    if (selectionNum >= this.ringPosMin || selectionNum < this.ringPosMax) {
+      
+    }
+  }
+
+  handlePositionSelectChanged = (selectionChar: string, rotorNUmber: number): void => {
+
+  }
+}
+
 class Controller {
   model: EnigmaModel;
   view: EnigmaView;
   inputOutputController: InputOutputController;
   plugboardController: PlugboardController;
   reflectorOptionsController: ReflectorOptionsController;
+  rotorOptionsController: RotorOptionsController;
 
   constructor(model: EnigmaModel, view: EnigmaView) {
     this.model = model;
@@ -687,6 +787,7 @@ class Controller {
       this.view.ioView
     );
     this.reflectorOptionsController = new ReflectorOptionsController(this.model, this.view.enigmaOptionsView.reflectorOptionsView);
+    this.rotorOptionsController = new RotorOptionsController(this.model, this.view.enigmaOptionsView.rotorOptionsView);
 
 
   }
